@@ -15,7 +15,10 @@ namespace DailyExpenses
             Amount = amount;
         }
 
-        public override string ToString() => $"{Name}; {Amount} рублей";
+        public override string ToString()
+        {
+            return $"{Name}; {Amount} рубле";
+        }
     }
 
     class Program
@@ -24,88 +27,181 @@ namespace DailyExpenses
         {
             List<Expense> expenses = new List<Expense>();
 
-            Console.WriteLine("Введите количество операций (2-40):");
+            Console.WriteLine("Введите количество операций (от 2 до 40):");
             int n;
-            while (!int.TryParse(Console.ReadLine(), out n) || n < 2 || n > 40)
+            while (true)
+            {
+                string input = Console.ReadLine();
+                if (int.TryParse(input, out n) && n >= 2 && n <= 40)
+                {
+                    break;
+                }
                 Console.WriteLine("Неверное значение. Введите число от 2 до 40:");
+            }
 
             Console.WriteLine("Введите траты по шаблону: (Название; Сумма)");
             for (int i = 0; i < n; i++)
             {
-                string line;
-                do
+                while (true)
                 {
-                    line = Console.ReadLine().Trim();
+                    string line = Console.ReadLine().Trim();
+
                     if (line.StartsWith("(") && line.EndsWith(")"))
                     {
-                        line = line.Substring(1, line.Length - 2).Trim();
-                        string[] parts = line.Split(';');
-                        if (parts.Length == 2 && double.TryParse(parts[1].Trim(), out double amount) && amount > 0)
+                        string content = line.Substring(1, line.Length - 2).Trim();
+                        string[] parts = content.Split(';');
+
+                        if (parts.Length == 2)
                         {
-                            expenses.Add(new Expense(parts[0].Trim(), amount));
-                            break;
+                            string name = parts[0].Trim();
+                            string amountStr = parts[1].Trim();
+
+                            if (double.TryParse(amountStr, out double amount) && amount > 0)
+                            {
+                                expenses.Add(new Expense(name, amount));
+                                break;
+                            }
                         }
                     }
+
                     Console.WriteLine("Неверный формат. Введите по шаблону: (Название; Сумма)");
-                } while (true);
+                }
             }
 
             while (true)
             {
-                Console.WriteLine("\nМеню:\n1. Вывод данных\n2. Статистика\n3. Сортировка по цене\n4. Конвертация валюты\n5. Поиск по названию\n0. Выход");
+                Console.WriteLine("\nМеню:");
+                Console.WriteLine("1. Вывод данных");
+                Console.WriteLine("2. Статистика");
+                Console.WriteLine("3. Сортировка по цене");
+                Console.WriteLine("4. Конвертация валюты");
+                Console.WriteLine("5. Поиск по названию");
+                Console.WriteLine("0. Выход");
                 Console.Write("Выберите пункт: ");
 
-                switch (Console.ReadLine())
-                {
-                    case "1":
-                        expenses.ForEach(e => Console.WriteLine(e));
-                        break;
-                    case "2":
-                        if (expenses.Count == 0) Console.WriteLine("Нет данных.");
-                        else Console.WriteLine($"Сумма: {expenses.Sum(e => e.Amount)} рубле\nСреднее: {expenses.Average(e => e.Amount):F2} рубле\nМаксимум: {expenses.Max(e => e.Amount)} рубле\nМинимум: {expenses.Min(e => e.Amount)} рубле");
-                        break;
-                    case "3":
-                        BubbleSort(expenses);
-                        Console.WriteLine("Данные отсортированы по цене:");
-                        expenses.ForEach(e => Console.WriteLine(e));
-                        break;
-                    case "4":
-                        Console.WriteLine("Выберите валюту:\n1. доллар (90 руб)\n2. евро (100 руб)\n3. Свой курс");
-                        string choice = Console.ReadLine();
-                        double rate = choice == "1" ? 90 : choice == "2" ? 100 : 0;
-                        string currency = choice == "1" ? "доллар" : choice == "2" ? "евро" : "";
+                string choice = Console.ReadLine();
 
-                        if (choice == "3")
+                if (choice == "1")
+                {
+                    Console.WriteLine("\nДанные:");
+                    foreach (var expense in expenses)
+                    {
+                        Console.WriteLine(expense);
+                    }
+                }
+                else if (choice == "2")
+                {
+                    if (expenses.Count == 0)
+                    {
+                        Console.WriteLine("Нет данных.");
+                    }
+                    else
+                    {
+                        double sum = expenses.Sum(e => e.Amount);
+                        double average = sum / expenses.Count;
+                        double max = expenses.Max(e => e.Amount);
+                        double min = expenses.Min(e => e.Amount);
+
+                        Console.WriteLine("\nСтатистика:");
+                        Console.WriteLine($"Сумма: {sum} рубле");
+                        Console.WriteLine($"Среднее: {average:F2} рубле");
+                        Console.WriteLine($"Максимум: {max} рубле");
+                        Console.WriteLine($"Минимум: {min} рубле");
+                    }
+                }
+                else if (choice == "3")
+                {
+                    BubbleSort(expenses);
+                    Console.WriteLine("\nДанные отсортированы по цене:");
+                    foreach (var expense in expenses)
+                    {
+                        Console.WriteLine(expense);
+                    }
+                }
+                else if (choice == "4")
+                {
+                    Console.WriteLine("\nВыберите валюту для конвертации:");
+                    Console.WriteLine("1. доллар (курс: 90 рубле за 1 доллар)");
+                    Console.WriteLine("2. евро (курс: 100 рубле за 1 евро)");
+                    Console.WriteLine("3. Ввести свой курс");
+                    Console.Write("Выбор: ");
+
+                    string currencyChoice = Console.ReadLine();
+                    double rate = 1.0;
+                    string currencyName = "";
+
+                    if (currencyChoice == "1")
+                    {
+                        rate = 90.0;
+                        currencyName = "доллар";
+                    }
+                    else if (currencyChoice == "2")
+                    {
+                        rate = 100.0;
+                        currencyName = "евро";
+                    }
+                    else if (currencyChoice == "3")
+                    {
+                        Console.Write("Введите курс: ");
+                        string rateInput = Console.ReadLine();
+                        if (double.TryParse(rateInput, out rate) && rate > 0)
                         {
-                            Console.Write("Введите курс: ");
-                            if (!double.TryParse(Console.ReadLine(), out rate) || rate <= 0)
-                            {
-                                Console.WriteLine("Неверный курс.");
-                                continue;
-                            }
                             Console.Write("Введите название валюты: ");
-                            currency = Console.ReadLine().Trim();
+                            currencyName = Console.ReadLine().Trim();
                         }
-                        else if (rate == 0)
+                        else
                         {
-                            Console.WriteLine("Неверный выбор.");
+                            Console.WriteLine("Неверный курс.");
                             continue;
                         }
-
-                        foreach (var e in expenses)
-                            Console.WriteLine($"{e.Name}; {e.Amount / rate:F2} {currency}");
-                        break;
-                    case "5":
-                        Console.Write("Введите название для поиска: ");
-                        string keyword = Console.ReadLine().Trim();
-                        var found = expenses.Where(e => e.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
-                        Console.WriteLine(found.Count > 0 ? string.Join("\n", found) : "Ничего не найдено.");
-                        break;
-                    case "0":
-                        return;
-                    default:
+                    }
+                    else
+                    {
                         Console.WriteLine("Неверный выбор.");
-                        break;
+                        continue;
+                    }
+
+                    Console.WriteLine($"\nКонвертированные данные в {currencyName}:");
+                    foreach (var expense in expenses)
+                    {
+                        double convertedAmount = expense.Amount / rate;
+                        Console.WriteLine($"{expense.Name}; {convertedAmount:F2} {currencyName}");
+                    }
+                }
+                else if (choice == "5")
+                {
+                    Console.Write("Введите название для поиска: ");
+                    string searchTerm = Console.ReadLine().Trim();
+
+                    List<Expense> foundExpenses = new List<Expense>();
+                    foreach (var expense in expenses)
+                    {
+                        if (expense.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            foundExpenses.Add(expense);
+                        }
+                    }
+
+                    if (foundExpenses.Count > 0)
+                    {
+                        Console.WriteLine("\nНайденные траты:");
+                        foreach (var expense in foundExpenses)
+                        {
+                            Console.WriteLine(expense);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Ничего не найдено.");
+                    }
+                }
+                else if (choice == "0")
+                {
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Неверный выбор.");
                 }
             }
         }
@@ -113,9 +209,17 @@ namespace DailyExpenses
         static void BubbleSort(List<Expense> list)
         {
             for (int i = 0; i < list.Count - 1; i++)
+            {
                 for (int j = 0; j < list.Count - i - 1; j++)
+                {
                     if (list[j].Amount > list[j + 1].Amount)
-                        (list[j], list[j + 1]) = (list[j + 1], list[j]);
+                    {
+                        Expense temp = list[j];
+                        list[j] = list[j + 1];
+                        list[j + 1] = temp;
+                    }
+                }
+            }
         }
     }
 }
