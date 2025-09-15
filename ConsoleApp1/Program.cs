@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,155 +15,91 @@ namespace DailyExpenses
             Amount = amount;
         }
 
-        public override string ToString()
-        {
-            return $"{Name}; {Amount} рубле";
-        }
+        public override string ToString() => $"{Name}; {Amount} рублей";
     }
 
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             List<Expense> expenses = new List<Expense>();
-            Console.WriteLine("Введите количество операций (от 2 до 40):");
+
+            Console.WriteLine("Введите количество операций (2-40):");
             int n;
             while (!int.TryParse(Console.ReadLine(), out n) || n < 2 || n > 40)
-            {
                 Console.WriteLine("Неверное значение. Введите число от 2 до 40:");
-            }
 
             Console.WriteLine("Введите траты по шаблону: (Название; Сумма)");
             for (int i = 0; i < n; i++)
             {
                 string line;
-                while (true)
+                do
                 {
                     line = Console.ReadLine().Trim();
                     if (line.StartsWith("(") && line.EndsWith(")"))
                     {
                         line = line.Substring(1, line.Length - 2).Trim();
                         string[] parts = line.Split(';');
-                        if (parts.Length == 2)
+                        if (parts.Length == 2 && double.TryParse(parts[1].Trim(), out double amount) && amount > 0)
                         {
-                            string name = parts[0].Trim();
-                            if (double.TryParse(parts[1].Trim(), out double amount) && amount > 0)
-                            {
-                                expenses.Add(new Expense(name, amount));
-                                break;
-                            }
+                            expenses.Add(new Expense(parts[0].Trim(), amount));
+                            break;
                         }
                     }
                     Console.WriteLine("Неверный формат. Введите по шаблону: (Название; Сумма)");
-                }
+                } while (true);
             }
 
             while (true)
             {
-                Console.WriteLine("\nМеню:");
-                Console.WriteLine("1. Вывод данных");
-                Console.WriteLine("2. Статистика (среднее, максимальное, минимальное, сумма)");
-                Console.WriteLine("3. Сортировка по цене (пузырьковая сортировка)");
-                Console.WriteLine("4. Конвертация валюты");
-                Console.WriteLine("5. Поиск по названию");
-                Console.WriteLine("0. Выход");
+                Console.WriteLine("\nМеню:\n1. Вывод данных\n2. Статистика\n3. Сортировка по цене\n4. Конвертация валюты\n5. Поиск по названию\n0. Выход");
                 Console.Write("Выберите пункт: ");
-                string choice = Console.ReadLine();
 
-                switch (choice)
+                switch (Console.ReadLine())
                 {
                     case "1":
-                        Console.WriteLine("\nДанные:");
-                        foreach (var exp in expenses)
-                        {
-                            Console.WriteLine(exp);
-                        }
+                        expenses.ForEach(e => Console.WriteLine(e));
                         break;
                     case "2":
-                        if (expenses.Count > 0)
-                        {
-                            double sum = expenses.Sum(e => e.Amount);
-                            double avg = sum / expenses.Count;
-                            double max = expenses.Max(e => e.Amount);
-                            double min = expenses.Min(e => e.Amount);
-                            Console.WriteLine($"\nСтатистика:");
-                            Console.WriteLine($"Сумма: {sum} рубле");
-                            Console.WriteLine($"Среднее: {avg:F2} рубле");
-                            Console.WriteLine($"Максимум: {max} рубле");
-                            Console.WriteLine($"Минимум: {min} рубле");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Нет данных.");
-                        }
+                        if (expenses.Count == 0) Console.WriteLine("Нет данных.");
+                        else Console.WriteLine($"Сумма: {expenses.Sum(e => e.Amount)} рубле\nСреднее: {expenses.Average(e => e.Amount):F2} рубле\nМаксимум: {expenses.Max(e => e.Amount)} рубле\nМинимум: {expenses.Min(e => e.Amount)} рубле");
                         break;
                     case "3":
                         BubbleSort(expenses);
-                        Console.WriteLine("\nДанные отсортированы по цене (по возрастанию):");
-                        foreach (var exp in expenses)
-                        {
-                            Console.WriteLine(exp);
-                        }
+                        Console.WriteLine("Данные отсортированы по цене:");
+                        expenses.ForEach(e => Console.WriteLine(e));
                         break;
                     case "4":
-                        Console.WriteLine("\nВыберите валюту для конвертации:");
-                        Console.WriteLine("1. доллар (курс: 90 рубле за 1 доллар)");
-                        Console.WriteLine("2. евро (курс: 100 рубле за 1 евро)");
-                        Console.WriteLine("3. Ввести свой курс");
-                        Console.Write("Выбор: ");
-                        string currChoice = Console.ReadLine();
-                        double rate = 1.0;
-                        string newCurrency = "";
-                        switch (currChoice)
+                        Console.WriteLine("Выберите валюту:\n1. доллар (90 руб)\n2. евро (100 руб)\n3. Свой курс");
+                        string choice = Console.ReadLine();
+                        double rate = choice == "1" ? 90 : choice == "2" ? 100 : 0;
+                        string currency = choice == "1" ? "доллар" : choice == "2" ? "евро" : "";
+
+                        if (choice == "3")
                         {
-                            case "1":
-                                rate = 90.0;
-                                newCurrency = "доллар";
-                                break;
-                            case "2":
-                                rate = 100.0;
-                                newCurrency = "евро";
-                                break;
-                            case "3":
-                                Console.Write("Введите курс: ");
-                                if (double.TryParse(Console.ReadLine(), out rate) && rate > 0)
-                                {
-                                    Console.Write("Введите название валюты: ");
-                                    newCurrency = Console.ReadLine().Trim();
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Неверный курс.");
-                                    continue;
-                                }
-                                break;
-                            default:
-                                Console.WriteLine("Неверный выбор.");
+                            Console.Write("Введите курс: ");
+                            if (!double.TryParse(Console.ReadLine(), out rate) || rate <= 0)
+                            {
+                                Console.WriteLine("Неверный курс.");
                                 continue;
+                            }
+                            Console.Write("Введите название валюты: ");
+                            currency = Console.ReadLine().Trim();
                         }
-                        Console.WriteLine($"\nКонвертированные данные в {newCurrency}:");
-                        foreach (var exp in expenses)
+                        else if (rate == 0)
                         {
-                            double converted = exp.Amount / rate;
-                            Console.WriteLine($"{exp.Name}; {converted:F2} {newCurrency}");
+                            Console.WriteLine("Неверный выбор.");
+                            continue;
                         }
+
+                        foreach (var e in expenses)
+                            Console.WriteLine($"{e.Name}; {e.Amount / rate:F2} {currency}");
                         break;
                     case "5":
                         Console.Write("Введите название для поиска: ");
                         string keyword = Console.ReadLine().Trim();
                         var found = expenses.Where(e => e.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
-                        if (found.Count > 0)
-                        {
-                            Console.WriteLine("\nНайденные траты:");
-                            foreach (var exp in found)
-                            {
-                                Console.WriteLine(exp);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Ничего не найдено.");
-                        }
+                        Console.WriteLine(found.Count > 0 ? string.Join("\n", found) : "Ничего не найдено.");
                         break;
                     case "0":
                         return;
@@ -176,19 +112,10 @@ namespace DailyExpenses
 
         static void BubbleSort(List<Expense> list)
         {
-            int n = list.Count;
-            for (int i = 0; i < n - 1; i++)
-            {
-                for (int j = 0; j < n - i - 1; j++)
-                {
+            for (int i = 0; i < list.Count - 1; i++)
+                for (int j = 0; j < list.Count - i - 1; j++)
                     if (list[j].Amount > list[j + 1].Amount)
-                    {
-                        Expense temp = list[j];
-                        list[j] = list[j + 1];
-                        list[j + 1] = temp;
-                    }
-                }
-            }
+                        (list[j], list[j + 1]) = (list[j + 1], list[j]);
         }
     }
 }
